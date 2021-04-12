@@ -1,0 +1,54 @@
+Certificate:
+    Data:
+        Version: 1 (0x0)
+        Serial Number:
+            56:2b:90:ab:31:f6:a8:4f:cd:bf:00:fe:7b:56:e5:c8:fe:f9:8d:73
+        Signature Algorithm: NULL
+        Issuer: CN = root.jarry.dk
+        Validity
+            Not Before: Apr  8 07:25:41 2021 GMT
+            Not After : Apr  6 07:25:41 2031 GMT
+        Subject: CN = root.jarry.dk
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (2048 bit)
+                Modulus:
+                    00:b3:ee:1a:77:f7:db:7e:81:64:24:70:07:3a:89:
+                    50:55:7a:71:a3:ce:b4:1b:ed:fc:0a:0d:b4:0f:ea:
+                    e1:d8:56:14:b6:5f:2e:7c:60:3e:ca:dc:a3:05:ec:
+                    6c:7f:b1:a6:b8:51:30:7d:68:06:b3:0c:5c:f8:c0:
+                    17:75:4c:3f:b5:74:4f:25:cc:47:83:af:42:d4:4d:
+                    c9:8c:98:cf:44:9a:88:b0:f2:54:7c:0e:24:6c:dc:
+                    1d:a8:86:02:68:81:bb:df:c8:06:02:6c:ac:59:4c:
+                    a2:32:41:48:8c:ac:b5:29:22:60:3f:2e:12:e2:51:
+                    ac:24:ea:f2:59:76:99:1f:17:99:85:4f:60:aa:62:
+                    ea:8d:0c:89:f1:8a:67:a8:c8:93:2e:02:89:dc:88:
+                    f1:85:ef:b9:e5:9d:a9:37:1c:2e:12:fd:65:0e:b3:
+                    ff:bd:91:18:cd:eb:54:c9:3e:d9:cd:c9:6b:05:4c:
+                    fb:f5:cf:d2:6b:c9:bb:db:61:95:5b:4c:f5:57:8c:
+                    db:0f:d5:34:6f:9a:b8:78:21:2b:93:8d:7b:dd:ba:
+                    31:65:6d:0a:be:d8:22:8f:c9:f7:9f:73:fe:03:7d:
+                    05:4e:5b:27:73:07:ed:1e:f2:59:ea:63:24:98:48:
+                    81:85:92:4e:35:22:ea:af:d6:64:42:5f:1a:53:89:
+                    81:31
+                Exponent: 65537 (0x10001)
+    Signature Algorithm: NULL
+-----BEGIN CERTIFICATE-----
+MIIDETCCAfmgAwIBAgIUViuQqzH2qE/NvwD+e1blyP75jXMwDQYJKoZIhvcNAQEL
+BQAwGDEWMBQGA1UEAwwNcm9vdC5qYXJyeS5kazAeFw0yMTA0MDgwNzI1NDFaFw0z
+MTA0MDYwNzI1NDFaMBgxFjAUBgNVBAMMDXJvb3QuamFycnkuZGswggEiMA0GCSqG
+SIb3DQEBAQUAA4IBDwAwggEKAoIBAQCz7hp399t+gWQkcAc6iVBVenGjzrQb7fwK
+DbQP6uHYVhS2Xy58YD7K3KMF7Gx/saa4UTB9aAazDFz4wBd1TD+1dE8lzEeDr0LU
+TcmMmM9Emoiw8lR8DiRs3B2ohgJogbvfyAYCbKxZTKIyQUiMrLUpImA/LhLiUawk
+6vJZdpkfF5mFT2CqYuqNDInximeoyJMuAonciPGF77nlnak3HC4S/WUOs/+9kRjN
+61TJPtnNyWsFTPv1z9JrybvbYZVbTPVXjNsP1TRvmrh4ISuTjXvdujFlbQq+2CKP
+yfefc/4DfQVOWydzB+0e8lnqYySYSIGFkk41Iuqv1mRCXxpTiYExAgMBAAGjUzBR
+MB0GA1UdDgQWBBS11WK/6dfB76o558z+FRZdEOQzbzAfBgNVHSMEGDAWgBS11WK/
+6dfB76o558z+FRZdEOQzbzAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUA
+A4IBAQAR9HAeja8p2OzMHZGnhBGGt+StUzeLND03W9cpG0XNNvKf7LrJWHHJPO+M
+ZGjgK0IhhpTGdrJtzPlyEQN66GEdbSH6z8s263yjT33CH8NfvZxqHdZr2FDRQsxK
+NHeu79POn380XqWaK1h705RBq5MXxWlPYjE9fhKvHvn8A28qhBj/ezuF85krx5GY
+9eeXzBO2FaOVrppLRueb4PaGyC4mPQdPOvAO2pfQ46d0Ud7HcKRoDlTFsnb4FUop
+yTH9zzKUsQ4fKbEh6i9gcYxnhO5j9rXvkeTc5Ax/7pgCnQvSQ0hhNZMm2ggi6gP9
+xpuUjcbk1ShFeB6Oi/Y6Yf4OWdCW
+-----END CERTIFICATE-----

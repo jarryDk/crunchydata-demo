@@ -1,0 +1,24 @@
+apiVersion: crunchydata.com/v1
+kind: Pgreplica
+metadata:
+  labels:
+    name: hippo-rpl1
+    pg-cluster: hippo
+    pgouser: admin
+  name: hippo-rpl1
+  namespace: pgo
+spec:
+  clustername: hippo
+  name: hippo-rpl1
+  namespace: pgo
+  replicastorage:
+    accessmode: ReadWriteMany
+    matchLabels: ""
+    name: hippo-rpl1
+    size: 1G
+    storageclass: ""
+    storagetype: dynamic
+    supplementalgroups: ""
+  tolerations: []
+  userlabels:
+    pgo-version: 4.6.2

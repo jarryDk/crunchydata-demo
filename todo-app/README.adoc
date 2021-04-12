@@ -1,0 +1,132 @@
+= ToDo app
+
+This is a very simple todo application and we it do the job.
+
+== Build the todo-app
+
+[source,bash]
+----
+./mvnw clean package
+----
+
+== Deployment to OpenShift
+
+=== Push app to registry on OpenShift
+
+[source,bash]
+----
+oc port-forward pod/$(oc get pods -n openshift-image-registry | awk '/^image-registry/{print $1}') \
+    -n openshift-image-registry 5000
+----
+
+[source,bash]
+----
+podman login --tls-verify=false -u unused -p $(oc whoami -t) localhost:5000/openshift
+
+podman build -f src/main/docker/Dockerfile.jvm -t localhost:5000/openshift/todo-app:v1 .
+podman push --tls-verify=false  localhost:5000/openshift/todo-app:v1
+----
+
+=== Deploy todo-app
+
+.Create a new namespace named todo
+[source,bash]
+----
+oc create namespace todo
+----
+
+.Apply configmap `todo-app-configmap` to namespace todo
+[source,bash]
+----
+oc apply -f todo-app-configmap.yaml -n todo
+----
+
+.Apply deployment `todo-app-deployment` to namespace todo
+[source,bash]
+----
+oc apply -f todo-app-deployment.yaml -n todo
+----
+
+.Apply service `todo-app` to `todo` namespace
+[source,bash]
+----
+oc apply -f todo-app-service.yaml -n todo
+----
+
+=== Use Todo app
+
+- http://console-openshift-console.apps-crc.testing:32284[Start page]
+- http://console-openshift-console.apps-crc.testing:32284/q/health[health]
+- http://console-openshift-console.apps-crc.testing:32284/q/metrics[metrics]
+- http://console-openshift-console.apps-crc.testing:32284/q/swagger-ui[swagger-ui]
+
+== Testing
+
+.Read list of ToDos via Curl
+[source,bash]
+----
+curl -I \
+    -H  "accept: application/json" \
+    "http://console-openshift-console.apps-crc.testing:32284/todos?from=0&limit=2"
+----
+link:test-scripts/curl_list_todos.sh[test-scripts/curl_list_todos.sh] 
+
+.Create a ToDo via Curl
+[source,bash]
+----
+curl -H "accept: application/json" \
+    -H  "Content-Type: application/json" \
+    -d "{\"body\":\"Curl test - body\",\"subject\":\""$(date +"%Y-%m-%dT%H:%M:%S%z")" - Curl test - subject\"}" \
+    -X POST "http://console-openshift-console.apps-crc.testing:32284/todos"
+----
+link:test-scripts/curl_create_one_todo.sh[test-scripts/curl_create_one_todo.sh] 
+
+.Create 100 ToDos via Curl
+[source,bash]
+----
+#!/bin/bash
+
+for i in {1..100}
+do
+    curl -H "accept: application/json" \
+        -H  "Content-Type: application/json" \
+        -d "{\"body\":\"Curl test - body\",\"subject\":\""$(date +"%Y-%m-%dT%H:%M:%S%z")" - Curl test - subject\"}" \
+        -X POST "http://console-openshift-console.apps-crc.testing:32284/todos"
+done    
+----
+link:test-scripts/curl_create_100_todo.sh[test-scripts/curl_create_100_todo.sh] 
+
+.Create ToDos via Apache HTTP server benchmarking tool
+[source,bash]
+----
+#!/bin/bash
+
+if [ -f "createToDo.json" ]; then
+    rm -f createToDo.json
+fi
+
+cat <<-EOF > "createToDo.json"
+{
+  "body": "body - ab testing",
+  "subject": "subject - ab testing"
+}
+EOF
+
+ab -n 100 -c 10 -T "application/json" -p createToDo.json -m POST \
+    http://console-openshift-console.apps-crc.testing:32284/todos
+----
+link:test-scripts/ab_create_todos.sh[test-scripts/ab_create_todos.sh] 
+
+.Read list of ToDos via Apache HTTP server benchmarking tool
+[source,bash]
+----
+#!/bin/bash
+
+ab -n 1000 -c 10 -T "application/json" \
+    http://console-openshift-console.apps-crc.testing:32284/todos
+----
+link:test-scripts/ab_list_todos.sh[test-scripts/ab_list_todos.sh] 
+
+== Links
+
+https://httpd.apache.org/docs/2.4/programs/ab.html[Apache HTTP server benchmarking tool]

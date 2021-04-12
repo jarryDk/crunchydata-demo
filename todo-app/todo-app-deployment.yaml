@@ -1,0 +1,38 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:  
+  name: todo-app
+  namespace: todo
+  labels:
+    app: todo-app
+    app.kubernetes.io/component: todo-app
+    app.kubernetes.io/instance: todo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      deployment: todo-app
+  template:
+    metadata:     
+      labels:
+        deployment: todo-app     
+    spec:
+      containers:
+        - name: todo-app
+          image: >-
+            image-registry.openshift-image-registry.svc:5000/openshift/todo-app:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: todo-app-config          
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%

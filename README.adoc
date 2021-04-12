@@ -1,0 +1,234 @@
+= Deploy a simple todo app on OpenShift using Crunchydata to setup PostgreSQL
+
+1. Install `Crunchy PostgreSQL for OpenShift operator`
+2. Install PostgreSQL Operator Monitoring
+3. We are going to create a cluster named `hippo`
+    - 1 Pgcluster
+        - 1 bouncer (part of Pgcluster)
+        - enable monitoring  (part of Pgcluster)
+        - enable tls (not force)
+    - 1 Pgreplica
+4. Deploy a simple todo application (use our cluster)
+5. See Monitroring of the cluster   
+
+== OpenShift
+
+[source,bash]
+----
+crc start
+----
+
+== Installation of Crunchy PostgreSQL for OpenShift operator
+
+Create the namespace `pgo` before installing the `Crunchy PostgreSQL for OpenShift operator`.
+
+[source,bash]
+----
+oc create namespace pgo
+----
+
+We will install the `Crunchy PostgreSQL for OpenShift` operator via OperatorHub on OpenShift.
+
+
+== Install PostgreSQL Operator Monitoring
+
+.Default Service ports.
+|==========================
+|Service|Port
+
+|Grafana|3000
+|Prometheus|9090
+|Alertmanager|9093
+|==========================
+
+.Install postgres-operator-metrics from local version (disable_fsgroup=true)
+[source,yaml]
+----
+oc apply -f postgres-operator-metrics.yml
+----
+
+.Create route for Prometheus
+[source,yaml]
+----
+oc -n pgo create route passthrough crunchy-prometheus --service=crunchy-prometheus
+----
+
+.Port forward to Prometheus
+[source,yaml]
+----
+oc -n pgo port-forward svc/crunchy-prometheus 9090:9090
+----
+
+.Create route for Grafana
+[source,yaml]
+----
+oc -n pgo create route passthrough crunchy-grafana --service=crunchy-grafana
+----
+
+.Port forward to Grafana
+[source,yaml]
+----
+oc -n pgo port-forward svc/crunchy-grafana 3000:3000
+----
+
+  grafana_admin_password: "admin"
+  grafana_admin_username: "admin"
+
+.Create route for Alertmanager
+[source,yaml]
+----
+oc -n pgo create route passthrough crunchy-alertmanager --service=crunchy-alertmanager
+----
+
+.Port forward to Alertmanager
+[source,yaml]
+----
+oc -n pgo port-forward svc/crunchy-alertmanager 9093:9093
+----
+
+.Create all routes in one go
+[source,yaml]
+----
+oc -n pgo create route passthrough crunchy-prometheus --service=crunchy-prometheus
+oc -n pgo create route passthrough crunchy-grafana --service=crunchy-grafana
+oc -n pgo create route passthrough crunchy-alertmanager --service=crunchy-alertmanager
+----
+
+== TLS for PostgreSQL
+
+Create ca.crt, server.crt, server.key via script
+
+[source,bash]
+----
+./createTlsFiles.sh
+----
+
+Add `secret` `postgresql-ca` and `hippo-tls-keypair` to the namespace `pgo` .
+
+.Create postgresql-ca
+[source,bash]
+----
+kubectl create secret generic postgresql-ca \
+  -n pgo \
+  --from-file=ca.crt=ca.crt
+----
+
+.Create {{ item.cluster_name }}-tls-keypair
+[source,bash]
+----
+kubectl create secret tls hippo-tls-keypair \
+  -n pgo \
+  --cert=server.crt \
+  --key=server.key
+----
+
+== Create the `hippo` cluster
+
+1 Pgcluster
+        - 1 bouncer (part of Pgcluster)
+        - enable monitoring  (part of Pgcluster)
+        - enable tls (not force)
+
+
+.Create Pgcluster
+[source,bash]
+----
+oc apply -f hippo-pgcluster.yaml
+----
+
+`pgBouncer` is enabled by adding the `pgBouncer` node.
+
+----
+pgBouncer:
+  limits: null
+  replicas: 1
+  resources: null
+  serviceType: ""
+  tlsSecret: {{ item.cluster_name }}-tls-keypair
+----
+
+Monitriong is enabled by adding `exporter: true`.
+
+.Create Pgreplica
+[source,bash]
+----
+oc apply -f hippo-pgclusterreplicas-rpl1.yaml
+----
+
+
+== Instillation of the pgo client
+
+https://access.crunchydata.com/documentation/postgres-operator/latest/installation/postgres-operator/#install-the-pgo-client-hahahugoshortcode-s8-hbhb[Install the pgo Client]
+
+[source,bash]
+----
+#!/bin/bash
+
+curl https://raw.githubusercontent.com/CrunchyData/postgres-operator/v4.6.2/deploy/install-bootstrap-creds.sh > install-bootstrap-creds.sh
+curl https://raw.githubusercontent.com/CrunchyData/postgres-operator/v4.6.2/installers/kubectl/client-setup.sh > client-setup.sh
+
+chmod +x install-bootstrap-creds.sh client-setup.sh
+
+echo "Create user ..."
+PGO_CMD=oc ./install-bootstrap-creds.sh
+
+echo "Setup pgp with user ..."
+PGO_CMD=oc ./client-setup.sh
+----
+
+Add this to `~/.bashr` or something like it 
+
+  export PGOUSER=$HOME/.pgo/$PGO_OPERATOR_NAMESPACE/pgouser
+  export PGO_CA_CERT=$HOME/.pgo/$PGO_OPERATOR_NAMESPACE/client.crt
+  export PGO_CLIENT_CERT=$HOME/.pgo/$PGO_OPERATOR_NAMESPACE/client.crt
+  export PGO_CLIENT_KEY=$HOME/.pgo/$PGO_OPERATOR_NAMESPACE/client.key
+
+Add pgo to path
+
+  export PATH="$HOME/.pgo/$PGO_OPERATOR_NAMESPACE:$PATH"
+
+or add an alias
+
+  alias pgo=$HOME/.pgo/pgo/pgo
+
+.For the pgo client to be able to access the api
+[source,bash]
+----
+oc -n pgo port-forward svc/postgres-operator 8443:8443
+----
+
+== User & Roles
+
+It is possible to create users as `managed` and `not managed`. 
+
+- The `managed` have the username/password in `secrets` like `hippo-primaryuser-secret` 
+- The `not manage` have username/password only in PostgreSQL
+
+.Get a list of user/password for a cluster via the pgo client
+[source,bash]
+----
+pgo show user hippo --show-system-accounts
+----
+
+WARNING: `pgo show user hippo --show-system-accounts` will only show password for `managed` users.  
+
+.Create a managed for our todo applicatio
+[source,bash]
+----
+pgo create user hippo --username=micbn --password=SuperSecret1 --managed
+----
+
+=== ToDo app
+
+We have a nice small app to test connection to a cluster.
+
+link:todo-app/README.adoc[todo-app/README.adoc]
+
+== See Monitroring of the cluster
+
+http://localhost:3000[Grafana]
+
+http://localhost:9090[Prometheus]
+
+http://localhost:9093[Alertmanager]
+
