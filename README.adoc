@@ -217,6 +217,7 @@ kubectl create secret tls hippo-tls-keypair \
 == Create the `hippo` cluster
 
 1 Pgcluster
+
   - 1 bouncer (part of Pgcluster)
   - enable monitoring  (part of Pgcluster)
   - enable tls (not force)
