@@ -2,20 +2,34 @@
 
 1. Install `Crunchy PostgreSQL for OpenShift operator`
 2. Install PostgreSQL Operator Monitoring
-3. We are going to create a cluster named `hippo`
+3. Install the `pgo` client
+4. We are going to create a cluster named `hippo`
     - 1 Pgcluster
         - 1 bouncer (part of Pgcluster)
         - enable monitoring  (part of Pgcluster)
         - enable tls (not force)
     - 1 Pgreplica
-4. Deploy a simple todo application (use our cluster)
-5. See Monitroring of the cluster   
+5. Deploy a simple todo application (use our cluster)
+6. See Monitroring of the cluster   
 
 == OpenShift
 
+.Start OpenShift
 [source,bash]
 ----
 crc start
+----
+
+.Login to OpenShift via oc
+[source,bash]
+----
+oc login -u kubeadmin -p <password> https://api.crc.testing:6443
+----
+
+.Open OpenShift in defaul browser
+[source,bash]
+----
+crc console
 ----
 
 == Installation of Crunchy PostgreSQL for OpenShift operator
@@ -28,7 +42,6 @@ oc create namespace pgo
 ----
 
 We will install the `Crunchy PostgreSQL for OpenShift` operator via OperatorHub on OpenShift.
-
 
 == Install PostgreSQL Operator Monitoring
 
@@ -45,6 +58,12 @@ We will install the `Crunchy PostgreSQL for OpenShift` operator via OperatorHub 
 [source,yaml]
 ----
 oc apply -f postgres-operator-metrics.yml
+----
+
+.Install postgres-operator-metrics directly from github (issues with scc on OpenShift)
+[source,yaml]
+----
+oc apply -f https://raw.githubusercontent.com/CrunchyData/postgres-operator/v4.6.2/installers/metrics/kubectl/postgres-operator-metrics.yml
 ----
 
 .Create route for Prometheus
@@ -94,68 +113,6 @@ oc -n pgo create route passthrough crunchy-grafana --service=crunchy-grafana
 oc -n pgo create route passthrough crunchy-alertmanager --service=crunchy-alertmanager
 ----
 
-== TLS for PostgreSQL
-
-Create ca.crt, server.crt, server.key via script
-
-[source,bash]
-----
-./createTlsFiles.sh
-----
-
-Add `secret` `postgresql-ca` and `hippo-tls-keypair` to the namespace `pgo` .
-
-.Create postgresql-ca
-[source,bash]
-----
-kubectl create secret generic postgresql-ca \
-  -n pgo \
-  --from-file=ca.crt=ca.crt
-----
-
-.Create {{ item.cluster_name }}-tls-keypair
-[source,bash]
-----
-kubectl create secret tls hippo-tls-keypair \
-  -n pgo \
-  --cert=server.crt \
-  --key=server.key
-----
-
-== Create the `hippo` cluster
-
-1 Pgcluster
-        - 1 bouncer (part of Pgcluster)
-        - enable monitoring  (part of Pgcluster)
-        - enable tls (not force)
-
-
-.Create Pgcluster
-[source,bash]
-----
-oc apply -f hippo-pgcluster.yaml
-----
-
-`pgBouncer` is enabled by adding the `pgBouncer` node.
-
-----
-pgBouncer:
-  limits: null
-  replicas: 1
-  resources: null
-  serviceType: ""
-  tlsSecret: {{ item.cluster_name }}-tls-keypair
-----
-
-Monitriong is enabled by adding `exporter: true`.
-
-.Create Pgreplica
-[source,bash]
-----
-oc apply -f hippo-pgclusterreplicas-rpl1.yaml
-----
-
-
 == Instillation of the pgo client
 
 https://access.crunchydata.com/documentation/postgres-operator/latest/installation/postgres-operator/#install-the-pgo-client-hahahugoshortcode-s8-hbhb[Install the pgo Client]
@@ -191,6 +148,15 @@ or add an alias
 
   alias pgo=$HOME/.pgo/pgo/pgo
 
+
+The client needs to be able to reach the PostgreSQL Operator API from outside the OpenShift cluster. Create an external service or forward a port locally.
+
+[source,bash]
+----
+oc -n pgo expose deployment postgres-operator
+oc -n pgo create route passthrough postgres-operator --service=postgres-operator
+----
+
 .For the pgo client to be able to access the api
 [source,bash]
 ----
@@ -207,7 +173,8 @@ It is possible to create users as `managed` and `not managed`.
 .Get a list of user/password for a cluster via the pgo client
 [source,bash]
 ----
-pgo show user hippo --show-system-accounts
+pgo show user hippo \
+  --show-system-accounts
 ----
 
 WARNING: `pgo show user hippo --show-system-accounts` will only show password for `managed` users.  
@@ -215,7 +182,97 @@ WARNING: `pgo show user hippo --show-system-accounts` will only show password fo
 .Create a managed for our todo applicatio
 [source,bash]
 ----
-pgo create user hippo --username=micbn --password=SuperSecret1 --managed
+pgo create user hippo \
+  --username=micbn --password=SuperSecret1 --managed
+----
+
+== TLS for the `hippo` cluster
+
+Create ca.crt, server.crt, server.key via script
+
+[source,bash]
+----
+./createTlsFiles.sh
+----
+
+Add `secret` `postgresql-ca` and `hippo-tls-keypair` to the namespace `pgo` .
+
+.Create postgresql-ca
+[source,bash]
+----
+kubectl create secret generic postgresql-ca \
+  -n pgo \
+  --from-file=ca.crt=ca.crt
+----
+
+.Create {{ item.cluster_name }}-tls-keypair
+[source,bash]
+----
+kubectl create secret tls hippo-tls-keypair \
+  -n pgo \
+  --cert=server.crt \
+  --key=server.key
+----
+
+== Create the `hippo` cluster
+
+1 Pgcluster
+  - 1 bouncer (part of Pgcluster)
+  - enable monitoring  (part of Pgcluster)
+  - enable tls (not force)
+
+.Create Pgcluster
+[source,bash]
+----
+oc apply -f hippo-pgcluster.yaml
+----
+
+`pgBouncer` is enabled by adding the `pgBouncer` node.
+
+----
+pgBouncer:
+  limits: null
+  replicas: 1
+  resources: null
+  serviceType: ""
+  tlsSecret: {{ item.cluster_name }}-tls-keypair
+----
+
+Monitriong is enabled by adding `exporter: true`.
+
+.Create Pgreplica
+[source,bash]
+----
+oc apply -f hippo-pgclusterreplicas-rpl1.yaml
+----
+
+.Test the `hippo` cluster
+[source,bash]
+----
+pgo test -n pgo hippo
+----
+
+=== Do we have access to pgBouncer
+
+.Port forward to the cluster hippo
+[source,bash]
+----
+oc -n pgo port-forward svc/hippo-pgbouncer 5432:5432
+----
+
+.Port forward to the cluster hippo
+[source,bash]
+----
+PGPASSWORD=SuperSecret1 psql -h localhost -p 5432 -U micbn hippo
+----
+
+.Result is something like this if tls is present
+----
+psql (13.2)
+SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, bits: 256, compression: off)
+Type "help" for help.
+
+hippo=>
 ----
 
 === ToDo app
@@ -224,7 +281,7 @@ We have a nice small app to test connection to a cluster.
 
 link:todo-app/README.adoc[todo-app/README.adoc]
 
-== See Monitroring of the cluster
+== See monitroring of the cluster
 
 http://localhost:3000[Grafana]
 
@@ -232,3 +289,8 @@ http://localhost:9090[Prometheus]
 
 http://localhost:9093[Alertmanager]
 
+== Links
+
+- https://code-ready.github.io/crc/[Red Hat CodeReady Containers]
+- https://www.crunchydata.com/
+- https://www.crunchydata.com/developers/download-postgres/containers/postgres-operator
