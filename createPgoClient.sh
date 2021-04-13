@@ -12,3 +12,7 @@ PGO_CMD=oc ./install-bootstrap-creds.sh
 
 echo "Setup pgp with user ..."
 PGO_CMD=oc ./client-setup.sh
+
+echo "Housekeeping"
+rm -f install-bootstrap-creds.sh
+rm -f client-setup.sh

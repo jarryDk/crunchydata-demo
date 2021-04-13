@@ -1,14 +1,18 @@
-= Author
+= Me
 
-Michael Borholdt Nielsen / Copenhagen
+image::images/michael.jpg[][alt=Michael,width=480,float="right"]
+
+Michael Borholdt Nielsen / Denmark / Copenhagen
 
 Work place : Redpill Linpro
 
 Working with
 
 - Java
-- Java EE / Jakarta ee 
-- Integration
+- Java EE / Jakarta EE 
+- Integrations
 - Devops
 
-Twitter :  https://twitter.com/jarry_dk
+Twitter : https://twitter.com/jarry_dk
+
+Github  : https://github.com/jarryDk
