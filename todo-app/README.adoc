@@ -13,23 +13,28 @@ This is a very simple todo application and we it do the job.
 
 === Push app to registry on OpenShift
 
+.Port forward - make OpenShift registry accessible on port 5000
 [source,bash]
 ----
-oc port-forward \
-    pod/$(oc get pods -n openshift-image-registry | awk '/^image-registry/{print $1}') \
-    -n openshift-image-registry 5000
+oc port-forward pod/$(oc get pods -n openshift-image-registry | awk '/^image-registry/{print $1}') -n openshift-image-registry 5000
 ----
 
+.Login to registry on OpenShift
 [source,bash]
 ----
-podman login \
-    --tls-verify=false -u unused -p $(oc whoami -t) localhost:5000/openshift
+podman login --tls-verify=false -u unused -p $(oc whoami -t) localhost:5000/openshift
+----
 
-podman build \
-    -f src/main/docker/Dockerfile.jvm -t localhost:5000/openshift/todo-app:v1 .
+.Build images 
+[source,bash]
+----
+podman build -f src/main/docker/Dockerfile.jvm -t localhost:5000/openshift/todo-app:v1 .
+----
 
-podman push \
-    --tls-verify=false  localhost:5000/openshift/todo-app:v1
+.Push images to registry on OpenShift
+[source,bash]
+----
+podman push --tls-verify=false localhost:5000/openshift/todo-app:v1
 ----
 
 === Deploy todo-app

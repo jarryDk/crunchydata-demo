@@ -133,18 +133,13 @@ Add `secret` `postgresql-ca` and `hippo-tls-keypair` to the namespace `pgo` .
 .Create postgresql-ca
 [source,bash]
 ----
-kubectl create secret generic postgresql-ca \
-  -n pgo \
-  --from-file=ca.crt=ca.crt
+kubectl create secret generic postgresql-ca -n pgo --from-file=ca.crt=ca.crt
 ----
 
 .Create {{ item.cluster_name }}-tls-keypair
 [source,bash]
 ----
-kubectl create secret tls hippo-tls-keypair \
-  -n pgo \
-  --cert=server.crt \
-  --key=server.key
+kubectl create secret tls hippo-tls-keypair -n pgo --cert=server.crt --key=server.key
 ----
 
 == Create the `hippo` cluster
@@ -234,8 +229,7 @@ WARNING: `pgo show user hippo --show-system-accounts` will only show password fo
 .Create a managed for our todo application
 [source,bash]
 ----
-pgo create user hippo \
-  --username=micbn --password=SuperSecret1 --managed
+pgo create user hippo --username=micbn --password=SuperSecret1 --managed
 ----
 
 === ToDo app
